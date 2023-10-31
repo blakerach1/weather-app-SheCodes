@@ -1,5 +1,4 @@
 import csv
-import statistics
 from datetime import datetime
 
 DEGREE_SYBMOL = u"\N{DEGREE SIGN}C"
@@ -27,6 +26,7 @@ def convert_date(iso_string):
     """
     # parse the input iso date string
     parsed_date = datetime.fromisoformat(iso_string)
+
     # format the parsed date as Weekday Date Month Year
     formatted_date = parsed_date.strftime('%A %d %B %Y')
     return formatted_date
@@ -44,7 +44,10 @@ def convert_f_to_c(temp_in_farenheit):
     """
     # parse the farenheit float
     parsed_temp = float(temp_in_farenheit)
+
+    # convert to celsius and round result to 1 dp
     celsius = round((parsed_temp - 32)*(5/9), 1)
+
     return celsius
 
     pass
@@ -58,14 +61,21 @@ def calculate_mean(weather_data):
     Returns:
         A float representing the mean value.
     """
-    # parse the list into average
-    new_list = []
 
+    # Initialize sum and count variables
+    total_sum = 0
+    count = 0
+
+    # Loop to convert each data point to a float and append in a new list
     for item in weather_data:
-        new_list.append(float(item))
+        total_sum += float(item)
+        # Increase the count
+        count += 1
 
-    parsed_list = statistics.mean(new_list)
-    return parsed_list
+    # Calculate the mean
+    mean_value = total_sum / count
+
+    return mean_value
 
     pass
 
@@ -78,6 +88,7 @@ def load_data_from_csv(csv_file):
     Returns:
         A list of lists, where each sublist is a (non-empty) line in the csv file.
     """
+    # Initialise an empty list
     data = []
 
     # Using a context manager to open the file
@@ -95,9 +106,11 @@ def load_data_from_csv(csv_file):
             if not item:
                 continue
 
-            # Convert min and max values to integers
-            row = [item[0], int(item[1]), int(item[2])]
-            data.append(row)
+            # Convert min and max values to integers and store each list row in a variable
+            row_list = [item[0], int(item[1]), int(item[2])]
+
+            # Create a list of lists
+            data.append(row_list)
 
         return data
 
@@ -112,17 +125,17 @@ def find_min(weather_data):
     Returns:
         The minimum value and it's position in the list.
     """
+    # Handle empty list cases
     if not weather_data:
-        # Handle empty list cases
         return ()
 
-    # find the minimum value
+    # find the minimum value and store in a variable
     min_value = min(weather_data)
 
     # initialize last index as None
     last_index = None
 
-    # Iterate the list from right to left
+    # Iterate the list from right to left, in decreasing increments of 1
     for i in range(len(weather_data) - 1, -1, -1):
         if weather_data[i] == min_value:
             last_index = i
@@ -194,27 +207,21 @@ def generate_summary(weather_data):
 
         # break  # exit the loop after finding the last occurence
 
-    lowest_temp, _ = find_min([day[1] for day in converted_list])
-    highest_temp, _ = find_max([day[2] for day in converted_list])
+    # Calculate lowest and highest temperatures
+    lowest_temp = min([day[1] for day in converted_list])
+    highest_temp = max([day[2] for day in converted_list])
 
-    lowest_day = None
-    highest_day = None
+    # Find dates for lowest and highest temperatures
+    lowest_date = next(day[0]
+                       for day in converted_list if day[1] == lowest_temp)
+    highest_date = next(day[0]
+                        for day in converted_list if day[2] == highest_temp)
 
-    for i in range(len(converted_list) - 1, -1, -1):
-        if converted_list[i][1] == lowest_temp:
-            lowest_day = i
-    for i in range(len(converted_list) - 1, -1, -1):
-        if converted_list[i][2] == highest_temp:
-            highest_day = i
-
-    if lowest_day is not None:
-        lowest_date = converted_list[lowest_day][0]
-
-    if highest_day is not None:
-        highest_date = converted_list[highest_day][0]
-
-    ave_low = round(statistics.mean([day[1] for day in converted_list]), 1)
-    ave_high = round(statistics.mean([day[2] for day in converted_list]), 1)
+    # Calculate average low and average high
+    total_low = sum([day[1] for day in converted_list])
+    total_high = sum([day[2] for day in converted_list])
+    ave_low = round(total_low / rows_num, 1)
+    ave_high = round(total_high / rows_num, 1)
 
     summary += f"{rows_num} Day Overview\n"
     summary += f"  The lowest temperature will be {lowest_temp}{DEGREE_SYBMOL}, and will occur on {lowest_date}.\n"
